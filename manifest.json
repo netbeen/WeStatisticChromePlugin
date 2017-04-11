@@ -1,0 +1,19 @@
+﻿{
+   "background": {
+      "page": "background.html"
+   },
+   "content_scripts": [ {
+      "js": [ "jquery-1.8.2.min.js", "content_scriptnew.js" ],
+      "matches": [ "http://www.we.com/account/*", "https://www.we.com/account/*" ]
+   } ],
+   "description": "人人贷散标统计插件",
+   "icons": {
+      "48": "ico_48.png"
+   },
+   "manifest_version": 2,
+   "name": "人人贷散标统计",
+   "page_action": {
+      "default_icon": "rrd.png"
+   },
+   "version": "1.3.1"
+}

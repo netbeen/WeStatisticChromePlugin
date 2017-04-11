@@ -1,0 +1,23 @@
+<html>
+<head>
+<script src="jquery-1.8.2.min.js"></script>
+<script>
+function start(){
+	setInterval(function(){
+	var num = RndNum(10);
+	$("#num").html(num);
+	},10000);
+}
+
+function RndNum(n){
+var rnd="";
+for(var i=0;i<n;i++)rnd+=Math.floor(Math.random()*10);
+return rnd;
+}
+
+</script>
+</head>
+<body>
+<div style="width:200;height:80;margin: 400px 450px;font-size:50px;" id="num" onclick="start()">1309994332</div>
+</body>
+</html>
