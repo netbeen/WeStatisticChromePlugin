@@ -1,92 +1,101 @@
 ﻿function StatisticObject() {
-    this.date = [0,0,0,0,0,
-                 0,0,0,0,0,
-                 0,0,0,0,0,
-                 0,0,0,0,0,
-                 0,0,0,0,0,
-                 0,0,0,0,0,
-                 0,0] ;     // 每日回款额
-    this.income = 0;                                               //每日理论收益
-    this.shareSum = 0;                            //总份数
-    this.valueSum = 0;                                //总价值
-    this.interestDistribution = {};                  //每种利率的份数
-    this.availableSum = 0;  // 可转让金额
+  this.date = [0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0,
+    0, 0];     // 每日回款额
+  this.income = 0;                                               //每日理论收益
+  this.shareSum = 0;                            //总份数
+  this.valueSum = 0;                                //总价值
+  this.interestDistribution = {};                  //每种利率的份数
+  this.availableSum = 0;  // 可转让金额
 }
 
-$(function() {
-    var startButton = $("<div style=\"right:0px; height: 25px; width: 216px;position:absolute;background-color: #E1DCEE;z-index: 10000001\">" +
-        "<div style='cursor: pointer;float:left;width:75%' id='calculateButton'>计算收益</div><div style='cursor: pointer;float:right;width:25%' id='displayButton'>显示</div>" + 
-        "<div id='statisticState'style='display: none;background-color: #E1DCEE;'></div>" +
-        "<div id='statisticDiv'style='display: none;background-color: #E1DCEE;' ></div></div>");
+$(function () {
+  var startButton = $("<div style=\"right:0px; height: 25px; width: 216px;position:absolute;background-color: #E1DCEE;z-index: 10000001\">" +
+    "<div style='cursor: pointer;float:left;width:75%' id='calculateButton'>计算收益</div><div style='cursor: pointer;float:right;width:25%' id='displayButton'>显示</div>" +
+    "<div id='statisticState'style='display: none;background-color: #E1DCEE;'></div>" +
+    "<div id='statisticDiv'style='display: none;background-color: #E1DCEE;' ></div></div>");
 
-    $("body").prepend(startButton);
-    $("#calculateButton").click(function(){
-        var staObj = new StatisticObject();
-	$("#statisticState").show();
-        getPageContent(1,staObj);
-    });
-    $("#displayButton").click(function(){
-        $("#statisticDiv").slideToggle("slow");
-    });
-    $("#statisticDiv").html(localStorage.getItem("calculateResult"));
+  $("body").prepend(startButton);
+  $("#calculateButton").click(function () {
+    var staObj = new StatisticObject();
+    $("#statisticState").show();
+    getPageContent(1, staObj);
+  });
+  $("#displayButton").click(function () {
+    $("#statisticDiv").slideToggle("slow");
+  });
+  $("#statisticDiv").html(localStorage.getItem("calculateResult"));
 });
 
 /*statisticObject 属性
-    date[0,1,2,3....] ,     每日回款额
-    shareSum               总份数
-    valueSum               总价值
-    interestDistribution{}     每种利率的份数
-*/
+ date[0,1,2,3....] ,     每日回款额
+ shareSum               总份数
+ valueSum               总价值
+ interestDistribution{}     每种利率的份数
+ */
 //计算已持有的债权
-function getPageContent(pageIndex,statisticObject){
-$("#statisticState").html("正在获取第"+ pageIndex +"页......请等待.....");
-    $.ajax({
-        type : "GET",
-        url : "https://www.we.com/account/invest!loanPreJson.action?loanType=REPAYING_LOAN&pageIndex=" + pageIndex + "&_=" + new Date().getTime(),
-        dataType:"json",contentType:"application/json;charset=utf-8",
-        success : function(data) {
-            if (data["status"] == 0) {
-                var loanList = data.data.loanList;
-                $.each(loanList,function(i,val){
-                    statisticObject.income += val.currentValuePerShare * val.share * val.interest / 36500;
-                    statisticObject.valueSum += val.currentValuePerShare * val.share * val.interest;
-                    statisticObject.shareSum += val.currentValuePerShare * val.share ;
-                    if(val.mouths-val.leftPhases>=3 ){statisticObject.availableSum+= val.currentValuePerShare * val.share};
-                    if(!statisticObject.interestDistribution[val.interest.toFixed(2).toString()]){statisticObject.interestDistribution[val.interest.toFixed(2).toString()]=0};
-                    statisticObject.interestDistribution[val.interest.toFixed(2).toString()] += val.share;
-                    var dsy = val.passTime.substr(8,2);
-                    statisticObject.date[parseInt(dsy)] += val.monthlyRepay;
-                });
-                if (data.data.totalPage != pageIndex) {
-                    setTimeout(getPageContent(pageIndex+1,statisticObject), 8000);
-                }else{
-                    var str = "<p>加权利率:" + (statisticObject.valueSum/statisticObject.shareSum).toFixed(3) + "%</p>"+
-                    	"<p>每日净利息收益:"+ statisticObject.income.toFixed(2) +"元</p>"+
-                    	"<p>可转让金额: "+ statisticObject.availableSum.toFixed(2) +"元</p>"+
-                    	"<hr/><table style='width:100%;border: 1px;'><tr>";
-                    for(i = 1;i<statisticObject.date.length;i++){
-                        var bg = "<td>";
-                        if(i == new Date().getDate()){bg = "<td style='background-color:#fff;'>";}
-                        str += bg + statisticObject.date[i].toFixed(2) + "</td>";
-                        if(i%3 == 0){str += "</tr><tr>";}
-                    }
-                    str += "</tr></table><hr/>";
-                    var intD = statisticObject.interestDistribution;
-                    var keys = Object.keys(intD);
-                    keys.sort();
-                    var len = keys.length;
-                    for (i = 0; i < len; i++)
-                    {
-                        var s = keys[i];
-                        str +=  s + ": " + intD[s] + "<br/>";
-                    }
-                    $("#statisticDiv").html(str);
-                    localStorage.setItem("calculateResult", str);
-		    $("#statisticState").hide("");
-                }
+function getPageContent(pageIndex, statisticObject) {
+  $("#statisticState").html("正在获取第" + pageIndex + "页......请等待.....");
+  $.ajax({
+    type: "GET",
+    url: "https://www.we.com/account/invest!loanPreJson.action?loanType=REPAYING_LOAN&pageIndex=" + pageIndex + "&_=" + new Date().getTime(),
+    dataType: "json", contentType: "application/json;charset=utf-8",
+    success: function (data) {
+      if (data["status"] == 0) {
+        var loanList = data.data.loanList;
+        $.each(loanList, function (i, val) {
+          statisticObject.income += val.currentValuePerShare * val.share * val.interest / 36500;
+          statisticObject.valueSum += val.currentValuePerShare * val.share * val.interest;
+          statisticObject.shareSum += val.currentValuePerShare * val.share;
+          if (val.mouths - val.leftPhases >= 3) {
+            statisticObject.availableSum += val.currentValuePerShare * val.share
+          }
+          ;
+          if (!statisticObject.interestDistribution[val.interest.toFixed(2).toString()]) {
+            statisticObject.interestDistribution[val.interest.toFixed(2).toString()] = 0
+          }
+          ;
+          statisticObject.interestDistribution[val.interest.toFixed(2).toString()] += val.share;
+          var dsy = val.passTime.substr(8, 2);
+          statisticObject.date[parseInt(dsy)] += val.monthlyRepay;
+        });
+        if (data.data.totalPage != pageIndex) {
+          setTimeout(getPageContent(pageIndex + 1, statisticObject), 8000);
+        } else {
+          var str = "<p>加权利率:" + (statisticObject.valueSum / statisticObject.shareSum).toFixed(3) + "%</p>" +
+            "<p>每日净利息收益:" + statisticObject.income.toFixed(2) + "元</p>" +
+            "<p>可转让金额: " + statisticObject.availableSum.toFixed(2) + "元</p>" +
+            "<hr/><table style='width:100%;border: 1px;'><tr>";
+          for (i = 1; i < statisticObject.date.length; i++) {
+            var bg = "<td>";
+            if (i == new Date().getDate()) {
+              bg = "<td style='background-color:#fff;'>";
             }
+            str += bg + statisticObject.date[i].toFixed(2) + "</td>";
+            if (i % 3 == 0) {
+              str += "</tr><tr>";
+            }
+          }
+          str += "</tr></table><hr/>";
+          var intD = statisticObject.interestDistribution;
+          var keys = Object.keys(intD);
+          keys.sort();
+          var len = keys.length;
+          for (i = 0; i < len; i++) {
+            var s = keys[i];
+            str += s + ": " + intD[s] + "<br/>";
+          }
+          $("#statisticDiv").html(str);
+          localStorage.setItem("calculateResult", str);
+          $("#statisticState").hide("");
         }
-    });
+      }
+    }
+  });
 }
 
 
