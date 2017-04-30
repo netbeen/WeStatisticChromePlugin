@@ -4,7 +4,7 @@
    },
    "content_scripts": [ {
       "js": [ "jquery-1.8.2.min.js", "content_scriptnew.js" ],
-      "matches": [ "http://www.we.com/account/*", "https://www.we.com/account/*" ]
+      "matches": [ "http://www.we.com/account/*", "https://www.we.com/account/*","https://www.renrendai.com/*"]
    } ],
    "description": "人人贷散标统计插件",
    "icons": {
